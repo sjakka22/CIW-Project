@@ -3,8 +3,8 @@ In this repository, we would like to share and manage the update of our project:
 
 # Weekly update reports ```Updates```
 In this directory, we create and collect the slides for our next presentation, 
-preferably written in TeX. 
-Proceed as follows:
+preferably written in TeX. Also, see ``` sample.tex ``` and ``` sample.presentation ``` in the ``` Updates ``` directory for code inspiration.   
+Then, proceed as follows:
 
 1. Write your slides in some .tex file, e. g. ``my_directory\my_slides_group_X.tex``
 Make sure to create distinguishable file names.
