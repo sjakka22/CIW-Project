@@ -6,7 +6,7 @@ Proceed as follows:
 ```
 git clone https://github.com/DEIN_USERNAME/latex-buch-projekt.git
 ```
-2. Write your chapter in some .tex file, e. g. my_chapter.tex
+2. Write your chapter in some .tex file, e. g. ``my_chapter.tex``
 ```
 \section{Mein Kapitel}
 Some text...
