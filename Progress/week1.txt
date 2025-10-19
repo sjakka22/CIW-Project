@@ -21,7 +21,14 @@ Targets of second meeting, 22.10:
     => actually PoseView and PoseEdit deliver what shall be achieved in the project.
     => Except for the fact that the user can't plug-in parameters 
     - Are we interested in a 2D- or 3D-depiction?
+- Look at PLIP:
+    - yields interaction tables (screenshot)
+    - we can also set cut-offs for interactions (screenshots)
+- What is it that we would like to add?
 
+Finding interactions:
+- water molecules can shield electrostatic interactions
+- how do we consider that effect?
 
 Targets of third meeting, 29.10:
 - 
