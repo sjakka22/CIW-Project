@@ -29,6 +29,24 @@ Targets of second meeting, 22.10:
 Finding interactions:
 - water molecules can shield electrostatic interactions
 - how do we consider that effect?
+________________________________________________
+
+TP1: Finding interactions
+- https://plip-tool.biotec.tu-dresden.de/plip-web/plip/help#section-interactions
+TP2: Visualisation
+- https://plip-tool.biotec.tu-dresden.de/plip-web/plip/result/7a78dcd7-2970-431b-98d1-c28a598ecc44
+- javascript molecule visualization
+- https://github.com/3dmol/3Dmol.js
+- Is visualization in-buildt into NAOMI? What are the functionalities of NAOMI?
+- A user-guide would suffice
+
+
+For wednesday, to clarify the project objective: include the CIW-slide on H bonds
+and explain the explained procedure (systematic grid search)
+
+
+
+
 
 Targets of third meeting, 29.10:
 - 
