@@ -1,0 +1,27 @@
+Targets of first meeting, 20.10:
+- divide project into subprojects
+- gather ideas for subprojects
+- do we need an organizer? what do we demand from an organizer?
+- what are strengths of each other? take previous experience into consideration
+- content:
+    - NAOMI or RDKIT
+    - how shall the subprojects collaborate?
+    - what are project objectives that we can realistically cover?
+    - formulate milestones
+    - formulate goals for the next meeting on 29.10
+
+Targets of second meeting, 22.10:
+- clarify project objective
+- get feedback on group organisation and subprojects
+- get advanced access, material on git and to NAOMI software
+- clarify if we can look at existing platforms 
+    - https://biosig.lab.uq.edu.au/arpeggioweb/ 
+    => Arpeggio from the University of cambridge
+    - PoseView and PoseEdit
+    => actually PoseView and PoseEdit deliver what shall be achieved in the project.
+    => Except for the fact that the user can't plug-in parameters 
+    - Are we interested in a 2D- or 3D-depiction?
+
+
+Targets of third meeting, 29.10:
+- 
