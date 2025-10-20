@@ -1,0 +1,60 @@
+
+
+Besprechungspunkte:
+	- Was verstehst du unter dem Projekt?
+	- Rollen: 
+		○ Protokollführung!
+			§ Noor
+		○ Koordinator*in, Zusammenführung & "Vereinheitlichung"
+			§ Sujit
+		○ Streitschlichter*in
+			§ Hannah
+		○ Zeitmanager*in
+			§ Alina
+		○ Code review
+			§ Vlad
+	- RDKIT oder NAOMI? Argumente austauschen, Ressourcen zur Selbsthilfe?
+		
+	- Abschlussbericht und Abschlusspräsentation?
+		○ Deutsch
+		○ LaTeX
+	- Organisation über Git
+	- Gemeinsamer Besprechungtermin jeden -- um -- Uhr (online / Präsenz / hybrid)
+	- Teilprojekte und Ansprechpartner*in für Teilprojekte
+		○ TP1: Interaktion finden
+		○ TP2: Visualisierung
+		○ TP3: Statistische Auswertung von Interaktionsgeometrien
+
+Inhalte:
+	- Klärung der Forschungsfragen (stichpunktartig)
+	- Teilprojekte definieren / ausschließen
+		○ TP1: Hannah, Amrei, Chris, Sujit   
+		○ TP2: Noor, Alina, Sujit   
+		○ TP3: Nele, Maren und Vlad
+	- Teilprojekte ausgestalten
+Meilensteien definieren
+
+Protokoll vom 20.10.: 1. Team-Meeting:
+
+	- Ziel des Projekts:
+		○ Parametrisierbarkeit - statistisch gemittelte Parameter statt Literaturwerte
+		○ Der Benutzer soll die Angaben machen, das Interaktionsmodell berücksichtigt 
+	- Organisator / Protokollführung
+	- Regel: Eine Kleingruppe (ein TP) übernimmt Verantwortung für die PPTX
+	- Protokollant*in für die Meetings: Noor
+	- Was verstehen wir unter dem Projekt:
+		○ Benutzeroberfläche
+		○ Visualisierung
+		○ Parameter an die Visualisierung koppeln
+		○ Verbindung der Datenbank zur Oberfläche
+	- NAOMI oder RDKit?
+- Pro-Con-Liste
+		○ GoogleDoc teilen
+	- Teilgruppen definiert
+	- Deadline für Abschluss der Entwicklung (21.12.2025)
+	- Ziele der TP bis 29.10: State-of-the Art, Literaturrecherche 
+	- Genug Zeit für Unit-Tests
+	
+	
+	
+	
