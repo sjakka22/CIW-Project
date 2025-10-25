@@ -1,0 +1,3 @@
+[submodule "Visualisierung/NGL_Viewer/ngl"]
+	path = Visualisierung/NGL_Viewer/ngl
+	url = https://github.com/nglviewer/ngl.git
