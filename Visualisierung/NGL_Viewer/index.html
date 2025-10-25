@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NGL Viewer Example</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background-color:#202020;
+    }
+    #viewport {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- Container für den NGL Viewer -->
+  <div id="viewport"></div>
+
+  <!-- NGL Library -->
+  <script src="./ngl/dist/ngl.js"></script>
+
+  <script>
+    // Warte, bis die Seite geladen ist
+    document.addEventListener("DOMContentLoaded", function() {
+      // Erstelle den NGL Viewer
+      const stage = new NGL.Stage("viewport");
+
+      // Fenstergröße automatisch anpassen
+      window.addEventListener("resize", function() {
+        stage.handleResize();
+      }, false);
+
+      // Beispiel 1: Protein aus der PDB laden (z. B. 1CRN)
+      stage.loadFile("rcsb://1kzk").then(function(o) {
+        o.addRepresentation("cartoon", { colorScheme: "chainname" });
+         o.addRepresentation("ball+stick", { sele: "hetero", color: "element", scale: 2.0 });
+         o.addRepresentation("ball+stick", { sele: "water", color: "blue", scale: 0.5 });
+        o.autoView();
+      });
+
+      // Beispiel 2: Du kannst auch lokale Dateien laden (z. B. .pdb)
+      // stage.loadFile("data/myStructure.pdb").then(function(o) {
+      //   o.addRepresentation("ball+stick");
+      //   o.autoView();
+      // });
+    });
+  </script>
+</body>
+</html>
