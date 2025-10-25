@@ -35,19 +35,15 @@
         stage.handleResize();
       }, false);
 
-      // Beispiel 1: Protein aus der PDB laden (z. B. 1CRN)
+      // Load Protein & Ligands 
       stage.loadFile("rcsb://1kzk").then(function(o) {
-        o.addRepresentation("cartoon", { colorScheme: "chainname" });
+        o.addRepresentation("cartoon", { colorScheme: "residueindex" });
          o.addRepresentation("ball+stick", { sele: "hetero", color: "element", scale: 2.0 });
          o.addRepresentation("ball+stick", { sele: "water", color: "blue", scale: 0.5 });
         o.autoView();
       });
 
-      // Beispiel 2: Du kannst auch lokale Dateien laden (z. B. .pdb)
-      // stage.loadFile("data/myStructure.pdb").then(function(o) {
-      //   o.addRepresentation("ball+stick");
-      //   o.autoView();
-      // });
+
     });
   </script>
 </body>
