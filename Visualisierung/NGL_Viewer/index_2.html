@@ -36,9 +36,14 @@
   <!-- Container für NGL Viewer -->
   <div id="viewport"></div>
 
+  <div id="info" style="position:absolute; top:10px; right:10px; 
+     background: rgba(255,255,255,0.8); padding:10px; border-radius:5px;">
+  <strong>Atom Selection:</strong><br>
+</div>
+
   <!-- GUI Controls -->
   <div id="controls">
-    <label for="colorSchemeSelector">Color Scheme:</label>
+    <label for="colorSchemeSelector">Color Scheme for protein:</label>
     <select id="colorSchemeSelector">
       <option value="atomindex">atomindex</option>
       <option value="bfactor">bfactor</option>
@@ -66,6 +71,10 @@
 
     <button id="cartoonBtn">Show Cartoon</button>
     <button id="ballStickBtn">Show Ball+Stick</button>
+    <button id="Sidechains @ Ligand">Sidechains @ Ligand</button>
+    <button id="sphereBtn">Sphere around Atom</button>
+    <button id="distBtn">Distance calculation</button>
+
   </div>
 
   <!-- NGL Library -->
@@ -84,12 +93,14 @@
       let proteinRep; // Protein Cartoon Repräsentation
       let atom1 = null; // Für Interaktion
       let atom2 = null;
-
+      let sphereAtom = null;
+      let structureComp = null;  // global speichern
 
       // Protein & Liganden laden
       
       stage.loadFile(`rcsb://${pdbId}`).then(function(o) {
-        proteinRep = o.addRepresentation("cartoon", { colorScheme: "resname" });
+        structureComp = o;  // global merken
+        proteinRep = o.addRepresentation("cartoon", { colorScheme: "uniform" });
         o.addRepresentation("ball+stick", { sele: "hetero", color: "element", scale: 2.0 });
         o.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
         o.autoView();
@@ -118,38 +129,146 @@
       document.getElementById("ballStickBtn").addEventListener("click", () => {
         stage.eachComponent(c => {
           c.removeAllRepresentations();
-          c.addRepresentation("ball+stick", { sele:"protein", color:"residueindex" });
+          c.addRepresentation("ball+stick", { sele:"protein", color: document.getElementById("colorSchemeSelector").value});
           c.addRepresentation("ball+stick", { sele:"hetero", color:"element", scale:2.0 });
           c.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
         });
       });
 
+      document.getElementById("Sidechains @ Ligand").addEventListener("click", () => {
+        stage.eachComponent(c => {
+          c.removeAllRepresentations();
+          const ligSelect = new NGL.Selection("ligand");
+          const radius = parseFloat(prompt("Enter radius in Å for showing sidechains in ball+stick", "5"));
+          const atomSet = c.structure.getAtomSetWithinSelection(ligSelect, radius); // 5 Å Umkreis
+          const atomSet2 = c.structure.getAtomSetWithinGroup(atomSet);
+          const sidechainSele = atomSet2.toSeleString() + "and (sidechain or .CA) and not _H";
+
+          c.addRepresentation("cartoon", { sele:"protein", color: document.getElementById("colorSchemeSelector").value});
+          c.addRepresentation("ball+stick", { sele: sidechainSele, color: "element", scale: 1.0 });
+          c.addRepresentation("ball+stick", { sele:"ligand", color: "#7CFC00"});
+          c.addRepresentation("ball+stick", { sele: atomSet2.toSeleString() + " and water", color: "#0088FF", scale: 0.1 });
+        });
+      });
+
+  
+    
+      let sphereMode = false;
+      let SphereRadius;
+      let distMode = false;
+     const infoDiv = document.getElementById("info");
+    document.getElementById("sphereBtn").addEventListener("click", () => {
+      if (sphereMode){
+        sphereMode = false;
+        infoDiv.innerHTML = "<strong>Sphere mode inactive:</strong>";
+        return;
+      }
+      if (!sphereMode){
+        sphereMode = true;  
+        infoDiv.innerHTML = "<strong>Sphere mode active:</strong> click on an atom to create a sphere.";  
+        SphereRadius = parseFloat(prompt("Enter radius in Å for sphere around atom", "5")) || 5;
+        return;
+      }
+  });
+
+      document.getElementById("distBtn").addEventListener("click", () => {
+      if (distMode){
+        distMode = false;
+        infoDiv.innerHTML = "<strong>Distance mode inactive:</strong>";
+        return;
+      }
+      if (!distMode){
+        distMode = true;  
+        infoDiv.innerHTML = "<strong>Distance mode active:</strong> click on two atoms to calculate their distance.";  
+        return;
+      }
+  });
+
       // Interaktive Atomselektion
       stage.signals.clicked.add(function(pickingProxy){
-        if(!pickingProxy.atom) return;
+        if(sphereMode){
+
+        
+         if(!pickingProxy.atom) return;
+            if (!sphereAtom){
+              sphereAtom = pickingProxy.atom;
+              infoDiv.innerHTML = `<strong>Atom selected:</strong> ${sphereAtom.toString()}`;
+              
+            }
+          var shape2 = new NGL.Shape("shape", { disableImpostor: true, radialSegments: 20 });
+          if (sphereAtom){
+            shape2.addSphere(sphereAtom.positionToVector3(), [0.2, 0.8, 1], SphereRadius); // Farbe + Radius
+            sphereAtom = null;
+          }
+          var shapeComp2 = stage.addComponentFromObject(shape2);
+          shapeComp2.addRepresentation("buffer", { wireframe: true });
+        }
+
+        if(distMode){
+        
+          if(!pickingProxy.atom) return;
+
 
         if(!atom1){
           atom1 = pickingProxy.atom;
-          console.log("Atom 1 selected:", atom1.toString());
+           infoDiv.innerHTML = `<strong>Atom 1 selected:</strong> ${atom1.toString()}`;
+        
+
+
         } else {
           atom2 = pickingProxy.atom;
-          console.log("Atom 2 selected:", atom2.toString());
+          infoDiv.innerHTML = `<strong>Atom 2 selected:</strong> ${atom2.toString()}`;
 
           // Abstand berechnen
           const dist = atom1.positionToVector3().distanceTo(atom2.positionToVector3());
-          console.log("Distance:", dist.toFixed(2), "Å");
+           infoDiv.innerHTML = `<strong>Distance: </strong> ${dist.toFixed(2)} Å`;
+          
 
           // Linie zwischen Atomen
-          const shape = new NGL.Shape("interaction");
+          var shape = new NGL.Shape("interaction");
           shape.addCylinder(atom1.positionToVector3(), atom2.positionToVector3(), [1,0,0], 0.1);
-          const shapeComp = stage.addComponentFromObject(shape);
+          var shapeComp = stage.addComponentFromObject(shape);
           shapeComp.addRepresentation("buffer");
+
 
           // Reset
           atom1 = null;
           atom2 = null;
         }
+        }
+
+
+
+        
+        /*
+        if (!sphereMode || !pickingProxy.atom) return;
+        const sphereAtom = pickingProxy.atom;
+        const radiusInput = parseFloat(prompt("Enter radius in Å for the sphere", "5"));
+        // radius shall be <= 0
+
+        if(sphereShapeComp){
+          // stage.removeComponent(sphereShapeComp);
+          sphereShapeComp = null;
+        }
+        const shape = new NGL.Shape("shape", { disableImpostor: true, radialSegments: 10 })
+        shape.addSphere(sphereAtom.positionToVector3(), [ 1, 0.5, 0 ], radiusInput)
+        infoDiv.innerHTML = `<strong>Atom position: </strong> ${sphereAtom.positionToVector3().toFixed(2)} Å`;
+        sphereShapeComp = stage.addComponentFromObject(shape)
+        sphereShapeComp.addRepresentation("buffer", { wireframe: true })
+        
+
+        infoDiv.innerHTML = `<strong>Sphere around atom:</strong> ${sphereAtom.toString()}<br><strong>Radius:</strong> ${radiusInput} Å`;
+        sphereMode = false;
+        sphereAtom = null;
+        stage.autoView();
+
+        */
+
       });
+      
+
+
+
 
     });
   </script>

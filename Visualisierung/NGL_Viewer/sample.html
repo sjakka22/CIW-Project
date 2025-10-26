@@ -1,16 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <title>NGL Test – Atome um Retinal</title>
+  <script src="https://unpkg.com/ngl@latest/dist/ngl.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; }
+    #viewport { width: 100vw; height: 100vh; }
+  </style>
 </head>
 <body>
-  <script src="./ngl/dist/ngl.js"></script>
+  <div id="viewport"></div>
+
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      var stage = new NGL.Stage("viewport");
-      stage.loadFile("rcsb://1crn", {defaultRepresentation: true});
+    // Bühne initialisieren
+    const stage = new NGL.Stage("viewport", { backgroundColor: "black" });
+
+    // Datei von RCSB laden
+    stage.loadFile("rcsb://1kzk").then(function (o) {
+
+      // 1️⃣ Auswahl des Liganden (Retinal)
+      const selection = new NGL.Selection("ligand");
+      const radius = 5;
+
+      // 2️⃣ Atome innerhalb von 5 Å um Retinal finden
+      const atomSet = o.structure.getAtomSetWithinSelection(selection, radius);
+
+      // 3️⃣ Auf komplette Reste erweitern
+      const atomSet2 = o.structure.getAtomSetWithinGroup(atomSet);
+
+      // 4️⃣ Darstellungen hinzufügen
+      o.addRepresentation("cartoon", { colorScheme: "residueindex" });
+      o.addRepresentation("ball+stick", { sele: atomSet2.toSeleString() + " and (not _H)", colorScheme: "element" });
+       o.addRepresentation("ball+stick", { sele: atomSet2.toSeleString() + " and (not _H)", colorScheme: "element" });
+
+      // 5️⃣ Automatisch zoomen
+      o.autoView();
     });
+
+    // Resizing
+    window.addEventListener("resize", () => stage.handleResize());
   </script>
-  <div id="viewport" style="width:400px; height:300px;"></div>
 </body>
 </html>
