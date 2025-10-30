@@ -187,13 +187,11 @@
 
       document.getElementById("removeBtn").addEventListener("click", () => {
 
-        if(structureComp){
-          stage.removeComponent(structureComp);
-          structureComp = null;
-          infoDiv.innerHTML = "<strong>Protein removed from view.</strong>";
-        } else {
-          infoDiv.innerHTML = "<strong>No protein to remove.</strong>";
-        }
+       if (proteinRep) {
+    proteinRep.dispose();
+    proteinRep = null;
+    // stage.viewer.requestRender && stage.viewer.requestRender();
+}
 
 
   });

@@ -1,0 +1,55 @@
+Stand 30.10.2025:
+- Geometrie-Modell (Interaktionsgruppen aus PPP) geschrieben und geteilt
+- Visualisierung der 1 : 2 : 3 Probleme begonnen
+- model_1_v_1.html stelle 1:1 Problem dar
+- model_1_v_2.html stellt 1:2 Problem dar
+- Winkel eintragen per Click => angle-representation.ts unter src/representation
+- Was passiert bei 2 / 3 / 4 Klicks
+
+./ngl/src/component/structure-component.ts
+
+- Beispiel für wie man Winkel in PDB-Struktur einzeichnen kann 
+
+// Setup to load data from rawgit
+NGL.DatasourceRegistry.add(
+    "data", new NGL.StaticDatasource( "//cdn.rawgit.com/arose/ngl/v2.0.0-dev.32/data/" )
+);
+
+// Create NGL Stage object
+var stage = new NGL.Stage( "viewport" );
+
+// Handle window resizing
+window.addEventListener( "resize", function( event ){
+    stage.handleResize();
+}, false );
+
+
+// Code for example: parser/dcd
+
+stage.loadFile("data://ala3.pdb").then(function (o) {
+  var atomPair = [
+    // [ "1.CA", "3.CA" ]
+    [ 8, 28 ]
+  ]
+  
+    var atomTriple = [[11,32, 12]];  // drei Punkte für Winkel
+
+  o.addRepresentation("licorice")
+  o.addRepresentation("cartoon", { sele: "protein" })
+  o.addRepresentation("distance", {
+    atomPair: atomPair
+  })
+    o.addRepresentation("angle", {
+        atomTriple: atomTriple,
+        labelColor: "skyblue",
+        color: "skyblue",
+        vectorVisible: true,
+        arcVisible: true,
+        sectorVisible: true
+    });
+  o.autoView()
+
+  NGL.autoLoad("data://ala3.dcd").then(function (frames) {
+    o.addTrajectory(frames)
+  })
+})

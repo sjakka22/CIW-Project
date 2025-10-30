@@ -5,7 +5,7 @@
   <title>1 vs 2 Interaktion – parametrisch</title>
   <style>
     body { margin: 0; font-family: sans-serif; background: #111; color: white; }
-    #viewport { width: 100vw; height: 80vh; }
+    #viewport { width: 100vw; height: 90vh; }
     #controls { text-align: center; margin-top: 10px; }
     input[type=range] { width: 200px; }
     label { margin: 0 10px; display: inline-block; width: 80px; text-align: right; }
@@ -46,6 +46,7 @@
     let shape, comp;
 
     function updateGeometry() {
+      // B und C berechnen (in der xy-Ebene)
       const rad = angleA * Math.PI / 180;
       B = [dAB, 0, 0];
       C = [dAC * Math.cos(rad), dAC * Math.sin(rad), 0];
@@ -55,29 +56,18 @@
 
       shape = new NGL.Shape("1vs2");
 
-      // === Punkte ===
+      // Punkte
       shape.addSphere(A, [1, 0, 0], 0.3, "A");
       shape.addSphere(B, [0, 1, 0], 0.3, "B");
       shape.addSphere(C, [0, 0, 1], 0.3, "C");
 
-      // === Linien ===
-      shape.addCylinder(A, B, [1,1,0], 0.05, "A–B");
-      shape.addCylinder(A, C, [1,1,0], 0.05, "A–C");
-      shape.addCylinder(B, C, [1,1,1], 0.05, "B–C");
+      // Linien
+      shape.addCylinder(A, B, [1, 1, 0], 0.05, "A–B");
+      shape.addCylinder(A, C, [1, 1, 0], 0.05, "A–C");
+      shape.addCylinder(B, C, [1, 1, 1], 0.05, "B–C");
 
-      // === Winkeltext ===
+      // Label für Winkel
       shape.addText([A[0], A[1]+0.7, A[2]], [1,1,0], 0.6, `${angleA.toFixed(1)}°`);
-
-      // === Winkelbogen (Arc) ===
-      const segments = 32;
-      const radius = 0.5;
-      for (let i=0;i<=segments;i++) {
-        const t = i/segments;
-        const theta = t * rad;
-        const x = radius * Math.cos(theta);
-        const y = radius * Math.sin(theta);
-        shape.addSphere([A[0]+x, A[1]+y, 0], [1,1,0], 0.05);
-      }
 
       comp = stage.addComponentFromObject(shape);
       comp.addRepresentation("buffer");

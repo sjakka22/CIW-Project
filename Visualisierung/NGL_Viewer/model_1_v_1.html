@@ -14,13 +14,14 @@
 <body>
   <div id="viewport"></div>
   <div id="controls">
-    <label>Distanz: <input type="range" id="distance" min="1" max="10" step="0.1" value="5"></label>
+    <label>Distanz: <input type="range" id="distance" min="1" max="100" step="0.1" value="5"></label>
     <span id="value">5.0</span>
   </div>
 
   <script>
     // === NGL Stage ===
     const stage = new NGL.Stage("viewport", { backgroundColor: "black" });
+    window.addEventListener("resize", () => stage.handleResize(), false);
 
     // === Zwei Punkte im Raum ===
     let d = 5.0;
@@ -28,7 +29,7 @@
     let pointB = [d, 0, 0];
 
     // === Shape-Objekt erzeugen ===
-    const shape = new NGL.Shape("PunkteUndLinie");
+    let shape = new NGL.Shape("PunkteUndLinie");
 
     // Punkte hinzufügen
     shape.addSphere(pointA, [1, 0, 0], 0.3); // rot
@@ -49,7 +50,7 @@
     addDashedLine(pointA, pointB, [1, 1, 1]);
 
     // === Darstellung laden ===
-    const comp = stage.addComponentFromObject(shape);
+    let comp = stage.addComponentFromObject(shape);
     comp.addRepresentation("buffer");
     stage.autoView();
 
@@ -63,16 +64,16 @@
       pointB = [d, 0, 0];
 
       // Alte Darstellung entfernen
-      stage.removeComponent(comp);
-
-      // Neue Shape erzeugen
-      const newShape = new NGL.Shape("updated");
-      newShape.addSphere(pointA, [1, 0, 0], 0.3);
-      newShape.addSphere(pointB, [0, 1, 0], 0.3);
+      shape.dispose();
+      if (comp) comp.dispose();
+      
+      shape.addSphere(pointA, [1, 0, 0], 0.3);
+      shape.addSphere(pointB, [0, 1, 0], 0.3);
       addDashedLine(pointA, pointB, [1, 1, 1]);
 
-      const newComp = stage.addComponentFromObject(newShape);
-      newComp.addRepresentation("buffer");
+      comp = stage.addComponentFromObject(shape);
+      comp.addRepresentation("buffer");
+      stage.autoView();
     });
   </script>
 </body>
