@@ -74,6 +74,7 @@
     <button id="Sidechains @ Ligand">Sidechains @ Ligand</button>
     <button id="sphereBtn">Sphere around Atom</button>
     <button id="distBtn">Distance calculation</button>
+    <button id="removeBtn">Remove protein</button>
 
   </div>
 
@@ -182,6 +183,19 @@
         infoDiv.innerHTML = "<strong>Distance mode active:</strong> click on two atoms to calculate their distance.";  
         return;
       }
+  });
+
+      document.getElementById("removeBtn").addEventListener("click", () => {
+
+        if(structureComp){
+          stage.removeComponent(structureComp);
+          structureComp = null;
+          infoDiv.innerHTML = "<strong>Protein removed from view.</strong>";
+        } else {
+          infoDiv.innerHTML = "<strong>No protein to remove.</strong>";
+        }
+
+
   });
 
       // Interaktive Atomselektion
