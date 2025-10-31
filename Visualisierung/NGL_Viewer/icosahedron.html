@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Wasser auf Ikosaeder</title>
+  <script src="https://unpkg.com/ngl@2.0.0-dev.39/dist/ngl.js"></script>
+  <style>
+    body { margin:0; }
+    #viewport { width:100vw; height:100vh; }
+  </style>
+</head>
+<body>
+<div id="viewport"></div>
+<script>
+const stage = new NGL.Stage("viewport");
+
+// Ikosaeder-Ecken
+const icosahedronVertices = [
+  [0,0,1.175571],[1.051462,0,0.5257311],[0.3249197,1,0.5257311],[-0.8506508,0.618034,0.5257311],
+  [-0.8506508,-0.618034,0.5257311],[0.3249197,-1,0.5257311],[0.8506508,0.618034,-0.5257311],
+  [0.8506508,-0.618034,-0.5257311],[-0.3249197,1,-0.5257311],[-1.051462,0,-0.5257311],
+  [-0.3249197,-1,-0.5257311],[0,0,-1.175571]
+];
+
+// Wasser-Molekül erstellen
+function createWater() {
+  const r = 0.9584;
+  const angle = 104.45*Math.PI/180;
+  const hx1 = r*Math.sin(angle/2);
+  const hy1 = r*Math.cos(angle/2);
+  const hx2 = -hx1;
+  const hy2 = hy1;
+  return [
+    { elem:"O", x:0, y:0, z:0 },
+    { elem:"H", x:hx1, y:hy1, z:0 },
+    { elem:"H", x:hx2, y:hy2, z:0 }
+  ];
+}
+
+// Rotation um Achse
+function rotateVector(v, axis, theta) {
+  const [x,y,z] = v;
+  const [u,v_,w] = axis;
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const dot = u*x + v_*y + w*z;
+  return [
+    u*dot*(1-cosT)+x*cosT+(-w*y+v_*z)*sinT,
+    v_*dot*(1-cosT)+y*cosT+(w*x-u*z)*sinT,
+    w*dot*(1-cosT)+z*cosT+(-v_*x+u*y)*sinT
+  ];
+}
+
+// Winkelhalbierende ausrichten
+function alignMolecule(mol, target) {
+  const H1 = [mol[1].x, mol[1].y, mol[1].z];
+  const H2 = [mol[2].x, mol[2].y, mol[2].z];
+  const bisector = [(H1[0]+H2[0])/2, (H1[1]+H2[1])/2, (H1[2]+H2[2])/2];
+  const bisNorm = Math.sqrt(bisector[0]**2 + bisector[1]**2 + bisector[2]**2);
+  const bisUnit = bisector.map(v=>v/bisNorm);
+  const tNorm = Math.sqrt(target[0]**2 + target[1]**2 + target[2]**2);
+  const targetUnit = target.map(v=>v/tNorm);
+  const cross = [
+    bisUnit[1]*targetUnit[2]-bisUnit[2]*targetUnit[1],
+    bisUnit[2]*targetUnit[0]-bisUnit[0]*targetUnit[2],
+    bisUnit[0]*targetUnit[1]-bisUnit[1]*targetUnit[0]
+  ];
+  const sinT = Math.sqrt(cross[0]**2+cross[1]**2+cross[2]**2);
+  const cosT = bisUnit[0]*targetUnit[0]+bisUnit[1]*targetUnit[1]+bisUnit[2]*targetUnit[2];
+  const theta = Math.atan2(sinT, cosT);
+  if(sinT<1e-6) return mol;
+  const axis = cross.map(v=>v/sinT);
+  return mol.map(atom=>{
+    const [x,y,z] = [atom.x, atom.y, atom.z];
+    const [rx,ry,rz] = rotateVector([x,y,z], axis, theta);
+    return { elem:atom.elem, x:rx, y:ry, z:rz };
+  });
+}
+
+// ==== XYZ-Daten erzeugen ====
+let xyzData = "";
+let totalAtoms = 60*3;
+xyzData += totalAtoms + "\n";
+xyzData += "60 Wasserorientierungen\n";
+
+icosahedronVertices.forEach(corner=>{
+  for(let j=0;j<5;j++){
+    let water = createWater();
+    water = alignMolecule(water, corner);
+    water = water.map(atom=>{
+      const [x,y,z] = rotateVector([atom.x,atom.y,atom.z], corner, (2*Math.PI/5)*j);
+      return { elem:atom.elem, x:x+corner[0]*2, y:y+corner[1]*2, z:z+corner[2]*2 };
+    });
+    water.forEach(atom=>{
+      xyzData += `${atom.elem} ${atom.x.toFixed(4)} ${atom.y.toFixed(4)} ${atom.z.toFixed(4)}\n`;
+    });
+  }
+});
+
+// ==== Moleküle laden ====
+const blob = new Blob([xyzData], {type:'text/plain'});
+stage.loadFile(blob,{ext:'xyz'}).then(component=>{
+  component.addRepresentation("ball+stick");
+  component.autoView();
+});
+
+// ==== Ikosaeder Ecken und Kanten darstellen ====
+icosahedronVertices.forEach(v=>{
+  const shape = new NGL.Shape("corner");
+  shape.addSphere(v, [1,0,0], 0.15);
+  stage.addComponentFromObject(shape).addRepresentation("buffer");
+});
+
+const icosahedronEdges = [
+  [0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[1,5],[1,6],[1,7],[2,3],
+  [2,6],[2,8],[3,4],[3,8],[3,9],[4,5],[4,9],[4,10],[5,7],[5,10],
+  [6,7],[6,8],[6,11],[7,10],[7,11],[8,9],[8,11],[9,10],[9,11],[10,11]
+];
+
+icosahedronEdges.forEach(e=>{
+  const [i,j] = e;
+  const v1 = icosahedronVertices[i];
+  const v2 = icosahedronVertices[j];
+  const shape = new NGL.Shape("edge");
+  shape.addCylinder(v1,v2,[0,1,0],0.05);
+  stage.addComponentFromObject(shape).addRepresentation("buffer");
+});
+
+</script>
+</body>
+</html>

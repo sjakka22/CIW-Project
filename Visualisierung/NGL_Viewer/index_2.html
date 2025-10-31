@@ -25,7 +25,20 @@
       padding: 10px;
       border-radius: 5px;
     }
-    #controls label, #controls select, #controls button {
+
+      /* Steuerungspanel unter Datei-Uploads */
+    #fileControls {
+    position: absolute;
+    top: 10px; /* etwas unter fileControls */
+    left: 500px;
+    z-index: 100;
+    background: rgba(255,255,255,0.9);
+    padding: 10px;
+    border-radius: 5px;
+  }
+
+    #controls label, #controls select, #controls button,
+    #fileControls label, #fileControls input, #fileControls button  {
       margin: 5px 0;
       display: block;
     }
@@ -40,6 +53,15 @@
      background: rgba(255,255,255,0.8); padding:10px; border-radius:5px;">
   <strong>Atom Selection:</strong><br>
 </div>
+
+    <!-- NEU: Datei-Uploads -->
+  <div id="fileControls">
+    <label>Protein (.pdb):</label>
+    <input type="file" id="proteinFile" accept=".pdb">
+    <label>Ligand (.sdf):</label>
+    <input type="file" id="ligandFile" accept=".sdf">
+    <button id="loadFilesBtn">Load Files</button>
+  </div>
 
   <!-- GUI Controls -->
   <div id="controls">
@@ -75,6 +97,7 @@
     <button id="sphereBtn">Sphere around Atom</button>
     <button id="distBtn">Distance calculation</button>
     <button id="removeBtn">Remove protein</button>
+    <button id="showResiduesButton">Show Selected Residues</button>
 
   </div>
 
@@ -83,9 +106,6 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-
-        const pdbId = prompt("Enter the PDB of your desired holostructure:");
-      document.title = `NGL Interactive Viewer of Holostructure ${pdbId}`;
 
             // NGL Stage erstellen
       const stage = new NGL.Stage("viewport");
@@ -98,13 +118,45 @@
       let structureComp = null;  // global speichern
 
       // Protein & Liganden laden
-      
-      stage.loadFile(`rcsb://${pdbId}`).then(function(o) {
+      const pdbId = prompt("Enter the PDB ID or leave blank to use local files:");
+      if (pdbId){
+        document.title = `NGL Interactive Viewer of Holostructure ${pdbId}`;
+        stage.loadFile(`rcsb://${pdbId}`).then(function(o) {
         structureComp = o;  // global merken
         proteinRep = o.addRepresentation("cartoon", { colorScheme: "uniform" });
         o.addRepresentation("ball+stick", { sele: "hetero", color: "element", scale: 2.0 });
         o.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
         o.autoView();
+      });
+      }
+      
+            // ===== NEU: Dateien laden =====
+      document.getElementById("loadFilesBtn").addEventListener("click", () => {
+        const proteinFile = document.getElementById("proteinFile").files[0];
+        const ligandFile = document.getElementById("ligandFile").files[0];
+
+        if(proteinFile){
+          stage.loadFile(proteinFile, { ext: "pdb" }).then(o => {
+            structureComp = o;
+            proteinRep = o.addRepresentation("cartoon", { colorScheme: "uniform" });
+            o.addRepresentation("ball+stick", { sele: "hetero", color: "element", scale: 2.0 });
+        o.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
+            
+          });
+        }
+
+      if(ligandFile){  
+        stage.loadFile(ligandFile, { ext: "sdf", name: ligandFile.name }).then(o => {
+            ligandComp = o;
+            o.addRepresentation("ball+stick", {sele: "hetero", color:"element", scale:2.0 });
+            o.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
+            o.autoView();
+        });
+
+             
+
+    }
+        
       });
 
       // Dropdown für Farbmodus
@@ -149,10 +201,40 @@
           c.addRepresentation("ball+stick", { sele: sidechainSele, color: "element", scale: 1.0 });
           c.addRepresentation("ball+stick", { sele:"ligand", color: "#7CFC00"});
           c.addRepresentation("ball+stick", { sele: atomSet2.toSeleString() + " and water", color: "#0088FF", scale: 0.1 });
+          c.addRepresentation("ball+stick", { sele: atomSet.toSeleString() + " and _H", color: "element", scale: 0.1 });
+          
         });
       });
 
-  
+      
+      document.getElementById("showResiduesButton").addEventListener("click", () => {
+  // Der Selektionsstring
+  const residueString = "(ASP and 150) or (HIS and 148) or (ASN and 155) or (LEU and 167)";
+
+  // Auf alle geladenen Strukturen anwenden
+  stage.eachComponent(c => {
+    // Alte Darstellungen entfernen
+    c.removeAllRepresentations();
+
+    // Cartoon für das restliche Protein (alles außer die gewählten Reste)
+    c.addRepresentation("cartoon", {
+      sele: "protein",
+      color: document.getElementById("colorSchemeSelector").value,
+      opacity: 0.4
+    });
+
+    // Ball+Stick nur für die gewünschten Reste
+    c.addRepresentation("ball+stick", {
+      sele: residueString,
+      color: "element",
+      scale: 1.0
+    });
+
+    // Ansicht automatisch zentrieren
+    c.autoView(residueString);
+  });
+});
+
     
       let sphereMode = false;
       let SphereRadius;

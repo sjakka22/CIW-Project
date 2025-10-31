@@ -17,6 +17,8 @@ Output: protonated_protein_{}.pdb und protonated_ligand_{}.sdf
 import sys
 import requests
 import time
+import subprocess
+import os
 
 protoss_url = "https://proteins.plus/api/protoss_rest"
 if (len(sys.argv) != 2) or (type(sys.argv[1]) != str):
@@ -65,11 +67,32 @@ while True:
 protein_url = result["protein"]
 ligand_url = result["ligands"]
 protein_pdb = requests.get(protein_url).text
+ligand_sdf = requests.get(ligand_url).text
 
 with open("protonated_protein_{}.pdb".format(pdb_code), "w") as p:
     p.write(protein_pdb)
 p.close()
 
 with open("protonated_ligand_{}.sdf".format(pdb_code), "w") as l:
-    l.write(protein_pdb)
+    l.write(ligand_sdf)
 l.close()
+
+print("Dateien gespeichert: protonated_ligand_{}.sdf, protonated_protein_{}.pdb".format(pdb_code,pdb_code))
+
+ligand_sdf_file = f"protonated_ligand_{pdb_code}.sdf"
+ligand_pdb_file = f"protonated_ligand_{pdb_code}.pdb"
+
+#  NEU: Konvertiere Ligand SDF -> PDB mit Open Babel
+try:
+    print("Konvertiere Ligand mit Open Babel ...")
+    subprocess.run(
+        ["obabel", ligand_sdf_file, "-O", ligand_pdb_file, "--gen3d"],
+        check=True
+    )
+    print(f"Ligand erfolgreich konvertiert: {ligand_pdb_file}")
+except FileNotFoundError:
+    print("Fehler: Open Babel (obabel) ist nicht installiert oder nicht im PATH!")
+except subprocess.CalledProcessError:
+    print("Fehler bei der Konvertierung mit obabel!")
+
+print("Fertig")
