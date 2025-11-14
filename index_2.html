@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NGL Interactive Viewer of Holostructure </title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background-color: #202020;
+      font-family: Arial, sans-serif;
+    }
+    #viewport {
+      width: 100%;
+      height: 100%;
+    }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: rgba(255,255,255,0.9);
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+      /* Steuerungspanel unter Datei-Uploads */
+    #fileControls {
+    position: absolute;
+    top: 10px; /* etwas unter fileControls */
+    left: 500px;
+    z-index: 100;
+    background: rgba(255,255,255,0.9);
+    padding: 10px;
+    border-radius: 5px;
+  }
+
+    #controls label, #controls select, #controls button,
+    #fileControls label, #fileControls input, #fileControls button  {
+      margin: 5px 0;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Container für NGL Viewer -->
+  <div id="viewport"></div>
+
+  <div id="info" style="position:absolute; top:10px; right:10px; 
+     background: rgba(255,255,255,0.8); padding:10px; border-radius:5px;">
+  <strong>Atom Selection:</strong><br>
+</div>
+
+    <!-- NEU: Datei-Uploads -->
+  <div id="fileControls">
+    <label>Protein (.pdb):</label>
+    <input type="file" id="proteinFile" accept=".pdb">
+    <label>Ligand (.sdf):</label>
+    <input type="file" id="ligandFile" accept=".sdf">
+    <button id="loadFilesBtn">Load Files</button>
+  </div>
+
+  <!-- GUI Controls -->
+  <div id="controls">
+    <label for="colorSchemeSelector">Color Scheme for protein:</label>
+    <select id="colorSchemeSelector">
+      <option value="atomindex">atomindex</option>
+      <option value="bfactor">bfactor</option>
+      <option value="chainid">chainid</option>
+      <option value="chainindex">chainindex</option>
+      <option value="chainname">chainname</option>
+      <option value="densityfit">densityfit</option>
+      <option value="electrostatic">electrostatic</option>
+      <option value="element">element</option>
+      <option value="entityindex">entityindex</option>
+      <option value="entitytype">entitytype</option>
+      <option value="geoquality">geoquality</option>
+      <option value="hydrophobicity">hydrophobicity</option>
+      <option value="modelindex">modelindex</option>
+      <option value="moleculetype">moleculetype</option>
+      <option value="occupancy">occupancy</option>
+      <option value="random">random</option>
+      <option value="residueindex">residueindex</option>
+      <option value="resname">resname</option>
+      <option value="sstruc">sstruc</option>
+      <option value="uniform">uniform</option>
+      <option value="value">value</option>
+      <option value="volume">volume</option>
+    </select>
+
+    <button id="cartoonBtn">Show Cartoon</button>
+    <button id="ballStickBtn">Show Ball+Stick</button>
+    <button id="Sidechains @ Ligand">Sidechains @ Ligand</button>
+    <button id="sphereBtn">Sphere around Atom</button>
+    <button id="distBtn">Distance calculation</button>
+    <button id="removeBtn">Remove protein</button>
+    <button id="showResiduesButton">Show Selected Residues</button>
+
+  </div>
+
+  <!-- NGL Library -->
+  <script src="./ngl.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+            // NGL Stage erstellen
+      const stage = new NGL.Stage("viewport");
+      window.addEventListener("resize", () => stage.handleResize(), false);
+
+      let proteinRep; // Protein Cartoon Repräsentation
+      let atom1 = null; // Für Interaktion
+      let atom2 = null;
+      let sphereAtom = null;
+      let structureComp = null;  // global speichern
+
+      // Protein & Liganden laden
+      const pdbId = prompt("Enter the PDB ID or leave blank to use local files:");
+      if (pdbId){
+        document.title = `NGL Interactive Viewer of Holostructure ${pdbId}`;
+        stage.loadFile(`rcsb://${pdbId}`).then(function(o) {
+        structureComp = o;  // global merken
+        proteinRep = o.addRepresentation("cartoon", { colorScheme: "uniform" });
+        o.addRepresentation("ball+stick", { sele: "hetero", color: "element", scale: 2.0 });
+        o.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
+        o.autoView();
+      });
+      }
+      
+            // ===== NEU: Dateien laden =====
+      document.getElementById("loadFilesBtn").addEventListener("click", () => {
+        const proteinFile = document.getElementById("proteinFile").files[0];
+        const ligandFile = document.getElementById("ligandFile").files[0];
+
+        if(proteinFile){
+          stage.loadFile(proteinFile, { ext: "pdb" }).then(o => {
+            structureComp = o;
+            proteinRep = o.addRepresentation("cartoon", { colorScheme: "uniform" });
+            o.addRepresentation("ball+stick", { sele: "hetero", color: "element", scale: 2.0 });
+        o.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
+            
+          });
+        }
+
+      if(ligandFile){  
+        stage.loadFile(ligandFile, { ext: "sdf", name: ligandFile.name }).then(o => {
+            ligandComp = o;
+            o.addRepresentation("ball+stick", {sele: "hetero", color:"element", scale:2.0 });
+            o.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
+            o.autoView();
+        });
+
+             
+
+    }
+        
+      });
+
+      // Dropdown für Farbmodus
+    document.getElementById("colorSchemeSelector").addEventListener("change", () => {
+        stage.eachComponent(c => {
+        c.removeAllRepresentations();
+        proteinRep = c.addRepresentation("cartoon", { colorScheme: document.getElementById("colorSchemeSelector").value });
+        c.addRepresentation("ball+stick", { sele:"hetero", color:"element", scale:2.0 });
+      c.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
+    });
+});
+
+      // Buttons für Darstellung
+      document.getElementById("cartoonBtn").addEventListener("click", () => {
+        stage.eachComponent(c => {
+          c.removeAllRepresentations();
+          proteinRep = c.addRepresentation("cartoon", { colorScheme: document.getElementById("colorSchemeSelector").value });
+          c.addRepresentation("ball+stick", { sele:"hetero", color:"element", scale:2.0 });
+         c.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
+        });
+      });
+
+      document.getElementById("ballStickBtn").addEventListener("click", () => {
+        stage.eachComponent(c => {
+          c.removeAllRepresentations();
+          c.addRepresentation("ball+stick", { sele:"protein", color: document.getElementById("colorSchemeSelector").value});
+          c.addRepresentation("ball+stick", { sele:"hetero", color:"element", scale:2.0 });
+          c.addRepresentation("ball+stick", { sele: "water", color: "#0088FF", scale: 0.1 });
+        });
+      });
+
+      document.getElementById("Sidechains @ Ligand").addEventListener("click", () => {
+        stage.eachComponent(c => {
+          c.removeAllRepresentations();
+          const ligSelect = new NGL.Selection("ligand");
+          const radius = parseFloat(prompt("Enter radius in Å for showing sidechains in ball+stick", "5"));
+          const atomSet = c.structure.getAtomSetWithinSelection(ligSelect, radius); // 5 Å Umkreis
+          const atomSet2 = c.structure.getAtomSetWithinGroup(atomSet);
+          const sidechainSele = atomSet2.toSeleString() + "and (sidechain or .CA) and not _H";
+
+          c.addRepresentation("cartoon", { sele:"protein", color: document.getElementById("colorSchemeSelector").value});
+          c.addRepresentation("ball+stick", { sele: sidechainSele, color: "element", scale: 1.0 });
+          c.addRepresentation("ball+stick", { sele:"ligand", color: "element"});
+          c.addRepresentation("ball+stick", { sele: atomSet2.toSeleString() + " and water", color: "#0088FF", scale: 0.1 });
+          //c.addRepresentation("ball+stick", { sele: atomSet.toSeleString() + "", color: "element", scale: 0.1 });
+          
+        });
+      });
+
+      
+      document.getElementById("showResiduesButton").addEventListener("click", () => {
+  // Der Selektionsstring
+  const residueString = "(ASP and 150) or (HIS and 148) or (ASN and 155) or (LEU and 167)";
+
+  // Auf alle geladenen Strukturen anwenden
+  stage.eachComponent(c => {
+    // Alte Darstellungen entfernen
+    c.removeAllRepresentations();
+
+    // Cartoon für das restliche Protein (alles außer die gewählten Reste)
+    c.addRepresentation("cartoon", {
+      sele: "protein",
+      color: document.getElementById("colorSchemeSelector").value,
+      opacity: 0.4
+    });
+
+    // Ball+Stick nur für die gewünschten Reste
+    c.addRepresentation("ball+stick", {
+      sele: residueString,
+      color: "element",
+      scale: 1.0
+    });
+
+    // Ansicht automatisch zentrieren
+    c.autoView(residueString);
+  });
+});
+
+    
+      let sphereMode = false;
+      let SphereRadius;
+      let distMode = false;
+     const infoDiv = document.getElementById("info");
+    document.getElementById("sphereBtn").addEventListener("click", () => {
+      if (sphereMode){
+        sphereMode = false;
+        infoDiv.innerHTML = "<strong>Sphere mode inactive:</strong>";
+        return;
+      }
+      if (!sphereMode){
+        sphereMode = true;  
+        infoDiv.innerHTML = "<strong>Sphere mode active:</strong> click on an atom to create a sphere.";  
+        SphereRadius = parseFloat(prompt("Enter radius in Å for sphere around atom", "5")) || 5;
+        return;
+      }
+  });
+
+      document.getElementById("distBtn").addEventListener("click", () => {
+      if (distMode){
+        distMode = false;
+        infoDiv.innerHTML = "<strong>Distance mode inactive:</strong>";
+        return;
+      }
+      if (!distMode){
+        distMode = true;  
+        infoDiv.innerHTML = "<strong>Distance mode active:</strong> click on two atoms to calculate their distance.";  
+        return;
+      }
+  });
+
+      document.getElementById("removeBtn").addEventListener("click", () => {
+
+       if (proteinRep) {
+    proteinRep.dispose();
+    proteinRep = null;
+    // stage.viewer.requestRender && stage.viewer.requestRender();
+}
+
+
+  });
+
+      // Interaktive Atomselektion
+      stage.signals.clicked.add(function(pickingProxy){
+        if(sphereMode){
+
+        
+         if(!pickingProxy.atom) return;
+            if (!sphereAtom){
+              sphereAtom = pickingProxy.atom;
+              infoDiv.innerHTML = `<strong>Atom selected:</strong> ${sphereAtom.toString()}`;
+              
+            }
+          var shape2 = new NGL.Shape("shape", { disableImpostor: true, radialSegments: 20 });
+          if (sphereAtom){
+            shape2.addSphere(sphereAtom.positionToVector3(), [0.2, 0.8, 1], SphereRadius); // Farbe + Radius
+            sphereAtom = null;
+          }
+          var shapeComp2 = stage.addComponentFromObject(shape2);
+          shapeComp2.addRepresentation("buffer", { wireframe: true });
+        }
+
+        if(distMode){
+        
+          if(!pickingProxy.atom) return;
+
+
+        if(!atom1){
+          atom1 = pickingProxy.atom;
+           infoDiv.innerHTML = `<strong>Atom 1 selected:</strong> ${atom1.toString()}`;
+        
+
+
+        } else {
+          atom2 = pickingProxy.atom;
+          infoDiv.innerHTML = `<strong>Atom 2 selected:</strong> ${atom2.toString()}`;
+
+          // Abstand berechnen
+          const dist = atom1.positionToVector3().distanceTo(atom2.positionToVector3());
+           infoDiv.innerHTML = `<strong>Distance: </strong> ${dist.toFixed(2)} Å`;
+          
+
+          // Linie zwischen Atomen
+          var shape = new NGL.Shape("interaction");
+          shape.addCylinder(atom1.positionToVector3(), atom2.positionToVector3(), [1,0,0], 0.1);
+          var shapeComp = stage.addComponentFromObject(shape);
+          shapeComp.addRepresentation("buffer");
+
+
+          // Reset
+          atom1 = null;
+          atom2 = null;
+        }
+        }
+
+
+
+        
+        /*
+        if (!sphereMode || !pickingProxy.atom) return;
+        const sphereAtom = pickingProxy.atom;
+        const radiusInput = parseFloat(prompt("Enter radius in Å for the sphere", "5"));
+        // radius shall be <= 0
+
+        if(sphereShapeComp){
+          // stage.removeComponent(sphereShapeComp);
+          sphereShapeComp = null;
+        }
+        const shape = new NGL.Shape("shape", { disableImpostor: true, radialSegments: 10 })
+        shape.addSphere(sphereAtom.positionToVector3(), [ 1, 0.5, 0 ], radiusInput)
+        infoDiv.innerHTML = `<strong>Atom position: </strong> ${sphereAtom.positionToVector3().toFixed(2)} Å`;
+        sphereShapeComp = stage.addComponentFromObject(shape)
+        sphereShapeComp.addRepresentation("buffer", { wireframe: true })
+        
+
+        infoDiv.innerHTML = `<strong>Sphere around atom:</strong> ${sphereAtom.toString()}<br><strong>Radius:</strong> ${radiusInput} Å`;
+        sphereMode = false;
+        sphereAtom = null;
+        stage.autoView();
+
+        */
+
+      });
+      
+
+
+
+
+    });
+  </script>
+</body>
+</html>
