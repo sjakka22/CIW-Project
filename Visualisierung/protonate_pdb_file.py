@@ -82,7 +82,8 @@ print("Dateien gespeichert: protonated_ligand_{}.sdf, protonated_protein_{}.pdb"
 ligand_sdf_file = f"protonated_ligand_{pdb_code}.sdf"
 ligand_pdb_file = f"protonated_ligand_{pdb_code}.pdb"
 
-#  NEU: Konvertiere Ligand SDF -> PDB mit Open Babel
+#  Optional: Konvertiere Ligand SDF -> PDB mit Open Babel
+"""
 try:
     print("Konvertiere Ligand mit Open Babel ...")
     subprocess.run(
@@ -96,3 +97,4 @@ except subprocess.CalledProcessError:
     print("Fehler bei der Konvertierung mit obabel!")
 
 print("Fertig")
+"""
